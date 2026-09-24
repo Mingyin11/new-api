@@ -59,7 +59,15 @@
 
 New API 是面向应用、Agent 和团队的自托管 AI 网关。将不同厂商的模型服务接入统一入口，在同一套控制台中管理渠道、访问权限、用量与成本。
 
-你可以用它为团队分配已授权的模型资源，在切换上游时减少客户端改动，或搭建自己的多模型服务。支持接入 OpenAI、Anthropic、Google Gemini、Azure OpenAI、AWS Bedrock、Vertex AI、DeepSeek、通义千问及其他兼容服务。
+你可以用它为团队分配已授权的模型资源，在切换上游时减少客户端改动，或搭建自己的多模型服务。支持接入 OpenAI、Anthropic、Google Gemini、Azure OpenAI、AWS Bedrock、Vertex AI、DeepSeek、通义千问、**NovelAI 原生画图集成**及其他兼容服务。
+
+### 🎨 NovelAI 深度原生集成与双轨计费特性
+- **官方实时 Anlas 差值动态计费**：生图前后通过官方 `GET https://image.novelai.net/user/subscription` 动态获取剩余点数差值（`anlasBefore - anlasAfter`），实际扣除额度 100% 以官方实际扣除数为准，拒绝写死固定计费。
+- **5 模型（NAI Diffusion V5）电量充能机制**：精准适配 Opus 订阅会员的充能电池（Rechargeable Battery / 电量）规则。每调用一次 5 模型精确扣减 1 点电量（电量 -1），电量充足时不额外扣除 Anlas。
+- **纯净 Anlas 货币体系**：全站彻底剔除传统 USD 美元标识，系统额度、充值与账户余额统一使用 `Anlas` 计价。
+- **明细双轨显式展示**：生图结算直观呈现 `⚡ 电量 + 💎 Anlas`（如 `⚡1 电量 + 💎0 Anlas`、`⚡0 电量 + 💎5 Anlas`、`⚡0 电量 + 💎0 Anlas (免费)`）。
+- **账号防封与排队锁**：针对单账号限制实施细粒度排队锁与 0.5s~3s 随机抖动延迟，并彻底剥离清洗下游浏览器指纹，伪装为原生安全请求。
+- **酒馆（SillyTavern）开箱即用**：原生透传 `/ai/generate-image` 协议及 OpenAI Chat Completion 图片流，酒馆等客户端无缝直连。
 
 > [!IMPORTANT]
 > - 本项目仅面向合法授权的 AI API 网关、组织内部鉴权、多模型管理、用量统计、成本核算和私有化部署场景。

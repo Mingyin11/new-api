@@ -59,7 +59,15 @@
 
 New API is a self-hosted AI gateway for applications, agents, and teams. Connect upstream model services, expose a consistent API to your clients, and manage routing, access, usage, and costs in one place.
 
-Use it to share authorized model access across a team, switch providers without configuring every client again, or operate a private multi-model service with a web console. Upstreams include OpenAI, Anthropic, Google Gemini, Azure OpenAI, AWS Bedrock, Vertex AI, DeepSeek, Qwen, and other compatible services.
+Use it to share authorized model access across a team, switch providers without configuring every client again, or operate a private multi-model service with a web console. Upstreams include OpenAI, Anthropic, Google Gemini, Azure OpenAI, AWS Bedrock, Vertex AI, DeepSeek, Qwen, **NovelAI Native Image Integration**, and other compatible services.
+
+### 🎨 NovelAI Native Integration & Dual-Track Billing
+- **Dynamic Anlas Tracking via Official API**: Inspects real-time Anlas balance before and after generation via `GET https://image.novelai.net/user/subscription`. Final deduction is 100% matched with actual official consumption (`anlasBefore - anlasAfter`), avoiding hardcoded rates.
+- **Diffusion V5 Battery / Power Support**: Full support for Opus Rechargeable Battery (Power). Each V5 generation deducts 1 Power (Power -1) with 0 Anlas cost when power is available.
+- **Pure Anlas Currency System**: Removed USD ($) currency across the platform. Balances, quotas, and logs are measured directly in `Anlas`.
+- **Dual-Track Settlement Badges**: Clear billing displays showing `⚡ Power + 💎 Anlas` in usage logs and cards.
+- **Anti-Ban Concurrency Queue & Fingerprint Spoofing**: Channel mutual-exclusion queue lock, 0.5s~3s random delay, and client device fingerprint sanitization.
+- **SillyTavern & Native Client Compatibility**: Zero-config upstream proxy for `/ai/generate-image` and OpenAI image formats.
 
 > [!IMPORTANT]
 > - This project is intended solely for lawful and authorized AI API gateway, organization-level authentication, multi-model management, usage analytics, cost accounting, and private deployment scenarios.
