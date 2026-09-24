@@ -98,6 +98,11 @@ export function ProfileDropdown() {
                   </>
                 )}
               </div>
+              <div className='flex items-center gap-1.5 mt-0.5 text-[11px] font-mono'>
+                <span className='text-amber-500 font-medium'>⚡ {user?.power ?? 0}</span>
+                <span className='text-muted-foreground/40'>|</span>
+                <span className='text-cyan-500 font-medium'>💎 {(user?.anlas ?? 0).toLocaleString()}</span>
+              </div>
             </div>
           </div>
 

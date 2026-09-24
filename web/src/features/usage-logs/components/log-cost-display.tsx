@@ -40,6 +40,7 @@ import type { LogOtherData } from '../types'
 interface LogCostDisplayProps {
   quota: number
   other: LogOtherData | null
+  content?: string
   showBillingSource?: boolean
 }
 
@@ -87,10 +88,6 @@ export function LogCostDisplay(props: LogCostDisplayProps) {
     : props.quota
   let source: string | undefined
 
-  // A log billed to a subscription always names its funding source: that
-  // subscription may have expired since, and the viewer may hold no active
-  // plan today. Only the wallet marker is contextual and follows
-  // showBillingSource.
   if (isSubscription) {
     source = t('Subscription')
   } else if (
@@ -100,12 +97,44 @@ export function LogCostDisplay(props: LogCostDisplayProps) {
     source = t('Wallet')
   }
 
+  // 专属解析 NovelAI 的扣减 (Anlas 与 电量)
+  let novelaiCost: string | null = null
+  const otherRecord = props.other as Record<string, any> | null
+  if (otherRecord?.power_cost !== undefined || otherRecord?.anlas_cost !== undefined) {
+    const p = Number(otherRecord?.power_cost ?? 0)
+    const a = Number(otherRecord?.anlas_cost ?? 0)
+    if (p > 0 && a > 0) {
+      novelaiCost = `⚡${p} 电量 + 💎${a} Anlas`
+    } else if (p > 0) {
+      novelaiCost = `⚡${p} 电量 + 💎0 Anlas`
+    } else if (a > 0) {
+      novelaiCost = `⚡0 电量 + 💎${a} Anlas`
+    } else {
+      novelaiCost = '⚡0 电量 + 💎0 Anlas (免费)'
+    }
+  } else if (props.content?.includes('【NovelAI】')) {
+    if (props.content.includes('免费规格')) {
+      novelaiCost = '⚡0 电量 + 💎0 Anlas (免费)'
+    } else {
+      const matchBoth = props.content.match(/扣除\s*(\d+)\s*每日电量.*?\+\s*(\d+)\s*Opus\s*点数\s*\(Anlas\)/)
+      const matchPower = props.content.match(/扣除\s*(\d+)\s*每日电量/)
+      const matchAnlas = props.content.match(/扣除\s*(\d+)\s*Opus\s*点数\s*\(Anlas\)/)
+      if (matchBoth) {
+        novelaiCost = `⚡${matchBoth[1]} 电量 + 💎${matchBoth[2]} Anlas`
+      } else if (matchPower) {
+        novelaiCost = `⚡${matchPower[1]} 电量 + 💎0 Anlas`
+      } else if (matchAnlas) {
+        novelaiCost = `⚡0 电量 + 💎${matchAnlas[1]} Anlas`
+      }
+    }
+  }
+
   return (
     <TooltipProvider>
       <div className='inline-flex w-fit items-center gap-1.5'>
         <StatusBadge
           type='badge'
-          variant='neutral'
+          variant={novelaiCost ? 'brand' : 'neutral'}
           size='lg'
           copyable={false}
           className='border-border/80 bg-muted/60 text-foreground rounded-md border font-semibold tabular-nums'
@@ -132,7 +161,9 @@ export function LogCostDisplay(props: LogCostDisplayProps) {
               <TooltipContent>{source}</TooltipContent>
             </Tooltip>
           ) : null}
-          <span className='whitespace-nowrap'>{formatLogQuota(quota)}</span>
+          <span className='whitespace-nowrap'>
+            {novelaiCost ? novelaiCost : formatLogQuota(quota)}
+          </span>
         </StatusBadge>
         {showToolSurcharge ? <ToolSurchargeMarker /> : null}
       </div>

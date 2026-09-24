@@ -44,6 +44,12 @@ export const userFormSchema = z.object({
   admin_permissions: z
     .record(z.string(), z.record(z.string(), z.boolean()))
     .optional(),
+  anlas: z.number().optional(),
+  power: z.number().optional(),
+  auto_power_enabled: z.boolean().optional(),
+  auto_power_amount: z.number().optional(),
+  auto_anlas_enabled: z.boolean().optional(),
+  auto_anlas_amount: z.number().optional(),
 })
 
 export type UserFormValues = z.infer<typeof userFormSchema>
@@ -62,6 +68,12 @@ export const USER_FORM_DEFAULT_VALUES: UserFormValues = {
   remark: '',
   // Filled against the backend catalog at render time; see UsersMutateDrawer.
   admin_permissions: {},
+  anlas: 0,
+  power: 0,
+  auto_power_enabled: false,
+  auto_power_amount: 50,
+  auto_anlas_enabled: false,
+  auto_anlas_amount: 10000,
 }
 
 // ============================================================================
@@ -94,6 +106,13 @@ export function transformFormDataToPayload(
     )
   }
 
+  payload.anlas = data.anlas
+  payload.power = data.power
+  payload.auto_power_enabled = data.auto_power_enabled
+  payload.auto_power_amount = data.auto_power_amount
+  payload.auto_anlas_enabled = data.auto_anlas_enabled
+  payload.auto_anlas_amount = data.auto_anlas_amount
+
   // For create: only send required fields
   if (userId === undefined) {
     payload.role = role
@@ -122,5 +141,11 @@ export function transformUserToFormDefaults(user: User): UserFormValues {
     group: user.group || DEFAULT_GROUP,
     remark: user.remark || '',
     admin_permissions: user.admin_permissions ?? {},
+    anlas: user.anlas ?? 0,
+    power: user.power ?? 0,
+    auto_power_enabled: !!user.auto_power_enabled,
+    auto_power_amount: user.auto_power_amount ?? 50,
+    auto_anlas_enabled: !!user.auto_anlas_enabled,
+    auto_anlas_amount: user.auto_anlas_amount ?? 10000,
   }
 }

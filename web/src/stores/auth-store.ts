@@ -38,6 +38,12 @@ export interface AuthUser {
   group?: string
   quota?: number
   used_quota?: number
+  anlas?: number
+  power?: number
+  auto_power_enabled?: boolean
+  auto_power_amount?: number
+  auto_anlas_enabled?: boolean
+  auto_anlas_amount?: number
   request_count?: number
   aff_code?: string
   aff_count?: number

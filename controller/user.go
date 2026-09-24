@@ -519,6 +519,12 @@ func buildSelfUserData(user *model.User) map[string]any {
 		"stripe_customer":   user.StripeCustomer,
 		"sidebar_modules":   userSetting.SidebarModules, // 正确提取sidebar_modules字段
 		"permissions":       permissions,
+		"anlas":             user.Anlas,
+		"power":             user.Power,
+		"auto_power_enabled": user.AutoPowerEnabled,
+		"auto_power_amount":  user.AutoPowerAmount,
+		"auto_anlas_enabled": user.AutoAnlasEnabled,
+		"auto_anlas_amount":  user.AutoAnlasAmount,
 	}
 }
 
@@ -1043,10 +1049,11 @@ func updateAdminPermissionsForUserInTx(c *gin.Context, tx *gorm.DB, userID int, 
 }
 
 type ManageRequest struct {
-	Id     int    `json:"id"`
-	Action string `json:"action"`
-	Value  int    `json:"value"`
-	Mode   string `json:"mode"`
+	Id         int    `json:"id"`
+	Action     string `json:"action"`
+	Value      int    `json:"value"`
+	Mode       string `json:"mode"`
+	TargetType string `json:"target_type"` // "quota", "power", "anlas"
 }
 
 // ManageUser Only admin user can do this

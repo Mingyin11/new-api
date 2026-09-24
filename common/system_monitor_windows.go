@@ -12,7 +12,11 @@ import (
 func GetDiskSpaceInfo() DiskSpaceInfo {
 	cachePath := GetDiskCachePath()
 	if cachePath == "" {
-		cachePath = os.TempDir()
+		if cwd, err := os.Getwd(); err == nil && cwd != "" {
+			cachePath = cwd
+		} else {
+			cachePath = os.TempDir()
+		}
 	}
 
 	info := DiskSpaceInfo{}

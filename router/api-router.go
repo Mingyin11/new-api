@@ -161,7 +161,22 @@ func SetApiRouter(router *gin.Engine) {
 				// Admin 2FA routes
 				adminRoute.GET("/2fa/stats", controller.Admin2FAStats)
 				adminRoute.DELETE("/:id/2fa", controller.AdminDisable2FA)
+				adminRoute.POST("/novelai/adjust", controller.AdjustUserNovelAI)
 			}
+		}
+
+		// NovelAI routes
+		novelaiRoute := apiRouter.Group("/novelai")
+		novelaiRoute.Use(middleware.UserAuth())
+		{
+			novelaiRoute.GET("/user/:id", controller.GetUserNovelAIInfo)
+		}
+		novelaiAdminRoute := apiRouter.Group("/novelai/admin")
+		novelaiAdminRoute.Use(middleware.AdminAuth())
+		{
+			novelaiAdminRoute.POST("/adjust", controller.AdjustUserNovelAI)
+			novelaiAdminRoute.POST("/refresh/daily_power", controller.TriggerDailyPowerRefreshAdmin)
+			novelaiAdminRoute.POST("/refresh/monthly_anlas", controller.TriggerMonthlyAnlasRefreshAdmin)
 		}
 
 		// Subscription billing (plans, purchase, admin management)

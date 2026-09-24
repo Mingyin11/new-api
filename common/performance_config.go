@@ -13,12 +13,12 @@ type PerformanceMonitorConfig struct {
 var performanceMonitorConfig atomic.Value
 
 func init() {
-	// 初始化默认配置
+	// 初始化默认配置 (DiskThreshold 设为 0 禁用磁盘熔断拦截，避免因 Windows 宿主盘容量报警导致误杀)
 	performanceMonitorConfig.Store(PerformanceMonitorConfig{
 		Enabled:         true,
 		CPUThreshold:    90,
 		MemoryThreshold: 90,
-		DiskThreshold:   90,
+		DiskThreshold:   0,
 	})
 }
 

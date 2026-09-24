@@ -774,6 +774,7 @@ export function useCommonLogsColumns(
             <LogCostDisplay
               quota={quota}
               other={other}
+              content={log.content}
               showBillingSource={showBillingSource}
             />
           )

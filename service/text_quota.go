@@ -262,6 +262,12 @@ func calculateTextQuotaSummary(ctx *gin.Context, relayInfo *relaycommon.RelayInf
 	summary.CacheCreationTokens1h = usage.ClaudeCacheCreation1hTokens
 	summary.ImageTokens = usage.PromptTokensDetails.ImageTokens
 	summary.AudioTokens = usage.PromptTokensDetails.AudioTokens
+
+	if relayInfo.ChannelType == constant.ChannelTypeNovelAI {
+		summary.Quota = 0
+		return summary
+	}
+
 	legacyClaudeDerived := isLegacyClaudeDerivedOpenAIUsage(relayInfo, usage)
 	isOpenRouterClaudeBilling := relayInfo.ChannelMeta != nil &&
 		relayInfo.ChannelType == constant.ChannelTypeOpenRouter &&
@@ -398,6 +404,29 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 	}
 	if originUsage != nil {
 		ObserveChannelAffinityUsageCacheByRelayFormat(ctx, billingUsage, relayInfo.GetFinalRequestRelayFormat())
+	}
+
+	if relayInfo.ChannelType == constant.ChannelTypeNovelAI {
+		if billingAny, exists := ctx.Get("novelai_billing_result"); exists {
+			if billing, ok := billingAny.(NovelAIBillingResult); ok {
+				extraContent = append(extraContent, billing.LogString())
+			}
+		} else if billingTypeAny, _ := ctx.Get("novelai_billing_type"); billingTypeAny != nil {
+			if billingType, ok := billingTypeAny.(NovelAIBillingType); ok {
+				costAny, _ := ctx.Get("novelai_cost")
+				cost, _ := costAny.(int)
+				switch billingType {
+				case BillingTypeFree:
+					extraContent = append(extraContent, "【NovelAI】Opus 免费规格 (0 扣除)")
+				case BillingTypePower:
+					extraContent = append(extraContent, fmt.Sprintf("【NovelAI】扣除 %d 每日电量 (Power)", cost))
+				case BillingTypeAnlas:
+					extraContent = append(extraContent, fmt.Sprintf("【NovelAI】扣除 %d Opus 点数 (Anlas)", cost))
+				case BillingTypeComposite:
+					extraContent = append(extraContent, "【NovelAI】扣除复合消耗 (Power + Anlas)")
+				}
+			}
+		}
 	}
 
 	adminRejectReason := common.GetContextKeyString(ctx, constant.ContextKeyAdminRejectReason)

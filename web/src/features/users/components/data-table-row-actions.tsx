@@ -28,6 +28,7 @@ import {
   ShieldAlert,
   Link2,
   CreditCard,
+  Zap,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -59,6 +60,7 @@ import {
 import { getUserActionMessage } from '../lib'
 import type { User, ManageUserAction } from '../types'
 import { UserBindingDialog } from './dialogs/user-binding-dialog'
+import { UserQuotaDialog } from './user-quota-dialog'
 import { useUsers } from './users-provider'
 
 interface DataTableRowActionsProps {
@@ -73,6 +75,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [resetTwoFAOpen, setResetTwoFAOpen] = useState(false)
   const [bindingDialogOpen, setBindingDialogOpen] = useState(false)
   const [subscriptionsDialogOpen, setSubscriptionsDialogOpen] = useState(false)
+  const [quotaDialogOpen, setQuotaDialogOpen] = useState(false)
 
   const handleEdit = () => {
     setCurrentRow(user)
@@ -221,6 +224,18 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           </DropdownMenuShortcut>
         </DropdownMenuItem>
 
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault()
+            setQuotaDialogOpen(true)
+          }}
+        >
+          {t('Adjust Quota')} / 电量 / Anlas
+          <DropdownMenuShortcut>
+            <Zap size={16} className='text-amber-500' />
+          </DropdownMenuShortcut>
+        </DropdownMenuItem>
+
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
@@ -298,6 +313,16 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         open={subscriptionsDialogOpen}
         onOpenChange={setSubscriptionsDialogOpen}
         user={{ id: user.id, username: user.username }}
+        onSuccess={triggerRefresh}
+      />
+
+      <UserQuotaDialog
+        open={quotaDialogOpen}
+        onOpenChange={setQuotaDialogOpen}
+        userId={user.id}
+        currentQuota={user.quota}
+        currentPower={user.power ?? 0}
+        currentAnlas={user.anlas ?? 0}
         onSuccess={triggerRefresh}
       />
     </div>

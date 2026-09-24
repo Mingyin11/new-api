@@ -195,6 +195,72 @@ export function useUsersColumns(): ColumnDef<User>[] {
         meta: { mobileOrder: 40 },
       },
       {
+        id: 'power',
+        accessorKey: 'power',
+        header: '⚡ 电量 (Power)',
+        cell: ({ row }) => {
+          const user = row.original
+          const power = user.power ?? 0
+          const isNegative = power < 0
+          return (
+            <div className='flex flex-col gap-0.5 min-w-[100px]'>
+              <div
+                className={`font-mono text-sm tabular-nums flex items-center gap-1 ${
+                  isNegative ? 'text-destructive font-semibold' : ''
+                }`}
+              >
+                <span>{power.toLocaleString()}</span>
+                {isNegative && (
+                  <span className='text-[10px] bg-destructive/10 text-destructive px-1 rounded'>
+                    欠费
+                  </span>
+                )}
+              </div>
+              {user.auto_power_enabled && (
+                <span className='text-[11px] text-muted-foreground'>
+                  每日 +{user.auto_power_amount ?? 50}
+                </span>
+              )}
+            </div>
+          )
+        },
+        size: 130,
+        meta: { mobileOrder: 45 },
+      },
+      {
+        id: 'anlas',
+        accessorKey: 'anlas',
+        header: '💎 Anlas',
+        cell: ({ row }) => {
+          const user = row.original
+          const anlas = user.anlas ?? 0
+          const isNegative = anlas < 0
+          return (
+            <div className='flex flex-col gap-0.5 min-w-[100px]'>
+              <div
+                className={`font-mono text-sm tabular-nums flex items-center gap-1 ${
+                  isNegative ? 'text-destructive font-semibold' : ''
+                }`}
+              >
+                <span>{anlas.toLocaleString()}</span>
+                {isNegative && (
+                  <span className='text-[10px] bg-destructive/10 text-destructive px-1 rounded'>
+                    欠费
+                  </span>
+                )}
+              </div>
+              {user.auto_anlas_enabled && (
+                <span className='text-[11px] text-muted-foreground'>
+                  每月 +{(user.auto_anlas_amount ?? 10000).toLocaleString()}
+                </span>
+              )}
+            </div>
+          )
+        },
+        size: 130,
+        meta: { mobileOrder: 46 },
+      },
+      {
         accessorKey: 'group',
         header: t('User Group'),
         cell: ({ row }) => {

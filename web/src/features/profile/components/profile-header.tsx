@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Activity, BarChart3, WalletCards } from 'lucide-react'
+import { Activity, WalletCards, Zap, Gem } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { StatusBadge } from '@/components/status-badge'
@@ -84,26 +84,36 @@ export function ProfileHeader({ profile, loading }: ProfileHeaderProps) {
   const avatarFallback = getUserAvatarFallback(avatarName)
   const avatarFallbackStyle = getUserAvatarStyle(avatarName)
   const roleLabel = getRoleLabel(profile.role)
+  const power = profile.power ?? 0
+  const anlas = profile.anlas ?? 0
+
   const stats: {
     label: string
     value: string
     description: string
     icon: typeof WalletCards
     tone: IconBadgeTone
+    isNegative?: boolean
   }[] = [
     {
-      label: t('Current Balance'),
-      value: formatQuota(profile.quota),
-      description: t('Remaining quota'),
-      icon: WalletCards,
-      tone: 'success',
+      label: '⚡ 每日电量 (Power)',
+      value: power.toLocaleString(),
+      description: profile.auto_power_enabled
+        ? `每日自动刷新至 ${profile.auto_power_amount}`
+        : 'V5 电池电量 (标准单张)',
+      icon: Zap,
+      tone: 'warning',
+      isNegative: power < 0,
     },
     {
-      label: t('Total Usage'),
-      value: formatQuota(profile.used_quota),
-      description: t('Total consumed quota'),
-      icon: BarChart3,
+      label: '💎 Opus 点数 (Anlas)',
+      value: anlas.toLocaleString(),
+      description: profile.auto_anlas_enabled
+        ? `每月自动分配 +${(profile.auto_anlas_amount ?? 10000).toLocaleString()}`
+        : '高步数/超大图/多图消耗',
+      icon: Gem,
       tone: 'info',
+      isNegative: anlas < 0,
     },
     {
       label: t('API Requests'),
@@ -111,6 +121,13 @@ export function ProfileHeader({ profile, loading }: ProfileHeaderProps) {
       description: t('Total requests made'),
       icon: Activity,
       tone: 'chart-4',
+    },
+    {
+      label: t('Current Balance'),
+      value: formatQuota(profile.quota),
+      description: t('Remaining quota'),
+      icon: WalletCards,
+      tone: 'success',
     },
   ]
 
@@ -163,7 +180,7 @@ export function ProfileHeader({ profile, loading }: ProfileHeaderProps) {
         </div>
       </CardContent>
       <div className='border-t'>
-        <div className='divide-border/60 grid grid-cols-3 divide-x'>
+        <div className='divide-border/60 grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0'>
           {stats.map((item) => (
             <div key={item.label} className='min-w-0 px-3 py-3 sm:px-5 sm:py-4'>
               <div className='flex items-center gap-2'>
@@ -175,8 +192,17 @@ export function ProfileHeader({ profile, loading }: ProfileHeaderProps) {
                 </div>
               </div>
 
-              <div className='text-foreground mt-1.5 truncate font-mono text-lg font-bold tracking-tight tabular-nums sm:mt-2 sm:text-2xl'>
+              <div
+                className={`mt-1.5 truncate font-mono text-lg font-bold tracking-tight tabular-nums sm:mt-2 sm:text-2xl ${
+                  item.isNegative ? 'text-destructive' : 'text-foreground'
+                }`}
+              >
                 {item.value}
+                {item.isNegative && (
+                  <span className='ml-1 text-xs text-destructive font-normal'>
+                    (欠费)
+                  </span>
+                )}
               </div>
               <div className='text-muted-foreground/60 mt-1 hidden text-xs md:block'>
                 {item.description}

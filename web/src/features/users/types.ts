@@ -62,6 +62,14 @@ export const userSchema = z.object({
   admin_permissions: z
     .record(z.string(), z.record(z.string(), z.boolean()))
     .optional(),
+  anlas: z.number().optional().default(0),
+  power: z.number().optional().default(0),
+  auto_power_enabled: z.boolean().optional().default(false),
+  auto_power_amount: z.number().optional().default(50),
+  auto_anlas_enabled: z.boolean().optional().default(false),
+  auto_anlas_amount: z.number().optional().default(10000),
+  last_power_refresh_date: z.string().optional(),
+  last_anlas_refresh_month: z.string().optional(),
 })
 export type User = z.infer<typeof userSchema>
 
@@ -126,6 +134,12 @@ export interface UserFormData {
   group?: string // Only used when updating user
   remark?: string // Only used when updating user
   admin_permissions?: AdminPermissionMatrix
+  anlas?: number
+  power?: number
+  auto_power_enabled?: boolean
+  auto_power_amount?: number
+  auto_anlas_enabled?: boolean
+  auto_anlas_amount?: number
 }
 
 export type ManageUserAction =
@@ -143,6 +157,7 @@ export interface ManageUserQuotaPayload {
   action: 'add_quota'
   mode: QuotaAdjustMode
   value: number
+  target_type?: 'quota' | 'power' | 'anlas'
 }
 
 // ============================================================================

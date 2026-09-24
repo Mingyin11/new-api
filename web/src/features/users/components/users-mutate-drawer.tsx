@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { Pencil } from 'lucide-react'
+import { Pencil, Zap, Gem } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -94,7 +94,7 @@ import {
   transformUserToFormDefaults,
 } from '../lib'
 import type { User } from '../types'
-import { UserQuotaDialog } from './user-quota-dialog'
+import { UserQuotaDialog, type QuotaTargetType } from './user-quota-dialog'
 import { useUsers } from './users-provider'
 
 type UsersMutateDrawerProps = {
@@ -114,6 +114,8 @@ export function UsersMutateDrawer({
   const currentUser = useAuthStore((s) => s.auth.user)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [quotaDialogOpen, setQuotaDialogOpen] = useState(false)
+  const [quotaDialogTargetType, setQuotaDialogTargetType] =
+    useState<QuotaTargetType>('power')
 
   // Fetch groups
   const { data: groupsData } = useQuery({
@@ -408,7 +410,10 @@ export function UsersMutateDrawer({
                           <Button
                             type='button'
                             variant='outline'
-                            onClick={() => setQuotaDialogOpen(true)}
+                            onClick={() => {
+                              setQuotaDialogTargetType('quota')
+                              setQuotaDialogOpen(true)
+                            }}
                           >
                             <Pencil className='mr-1 h-4 w-4' />
                             {t('Adjust Quota')}
@@ -441,6 +446,215 @@ export function UsersMutateDrawer({
                       </FormItem>
                     )}
                   />
+                </SideDrawerSection>
+              )}
+
+              {/* NovelAI Quota & Allocation (Update only) */}
+              {isUpdate && (
+                <SideDrawerSection>
+                  <div className='flex items-center gap-2'>
+                    <Zap className='h-4 w-4 text-amber-500' />
+                    <h3 className='text-sm font-medium'>
+                      NovelAI 配额与自动分配 (Power / Anlas)
+                    </h3>
+                  </div>
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    <FormField
+                      control={form.control}
+                      name='power'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className='flex items-center justify-between'>
+                            <span className='flex items-center gap-1'>
+                              <Zap className='h-3.5 w-3.5 text-amber-500' />
+                              <span>每日电量 (Power 余额)</span>
+                            </span>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='sm'
+                              className='h-5 text-xs text-amber-600 dark:text-amber-400 px-1'
+                              onClick={() => {
+                                setQuotaDialogTargetType('power')
+                                setQuotaDialogOpen(true)
+                              }}
+                            >
+                              ⚡ 调整
+                            </Button>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type='number'
+                              {...field}
+                              value={field.value ?? 0}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value, 10) || 0)
+                              }
+                            />
+                          </FormControl>
+                          <FormDescription className='text-xs'>
+                            用于 V5 电池电量 (允许负数)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name='anlas'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className='flex items-center justify-between'>
+                            <span className='flex items-center gap-1'>
+                              <Gem className='h-3.5 w-3.5 text-cyan-500' />
+                              <span>Opus 点数 (Anlas 余额)</span>
+                            </span>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='sm'
+                              className='h-5 text-xs text-cyan-600 dark:text-cyan-400 px-1'
+                              onClick={() => {
+                                setQuotaDialogTargetType('anlas')
+                                setQuotaDialogOpen(true)
+                              }}
+                            >
+                              💎 调整
+                            </Button>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type='number'
+                              {...field}
+                              value={field.value ?? 0}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value, 10) || 0)
+                              }
+                            />
+                          </FormControl>
+                          <FormDescription className='text-xs'>
+                            用于高规格 Anlas (允许负数)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Auto Allocation Settings */}
+                  <div className='space-y-3 rounded-lg border p-3.5 bg-muted/20'>
+                    <div className='text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
+                      自动分配策略 (Auto Allocation)
+                    </div>
+
+                    <div className='space-y-2 rounded-md border p-3 bg-background'>
+                      <FormField
+                        control={form.control}
+                        name='auto_power_enabled'
+                        render={({ field }) => (
+                          <FormItem className='flex flex-row items-center justify-between space-y-0'>
+                            <div className='space-y-0.5'>
+                              <FormLabel className='text-sm font-medium'>
+                                ⚡ 每日自动刷新电量
+                              </FormLabel>
+                              <FormDescription className='text-xs'>
+                                每日定时自动重置该用户电量至设定值
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Checkbox
+                                checked={!!field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {form.watch('auto_power_enabled') && (
+                        <FormField
+                          control={form.control}
+                          name='auto_power_amount'
+                          render={({ field }) => (
+                            <FormItem className='pt-2 border-t'>
+                              <FormLabel className='text-xs'>
+                                每日刷新目标电量 (Power)
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type='number'
+                                  min={0}
+                                  {...field}
+                                  value={field.value ?? 50}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseInt(e.target.value, 10) || 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+
+                    <div className='space-y-2 rounded-md border p-3 bg-background'>
+                      <FormField
+                        control={form.control}
+                        name='auto_anlas_enabled'
+                        render={({ field }) => (
+                          <FormItem className='flex flex-row items-center justify-between space-y-0'>
+                            <div className='space-y-0.5'>
+                              <FormLabel className='text-sm font-medium'>
+                                💎 每月自动分配 Anlas
+                              </FormLabel>
+                              <FormDescription className='text-xs'>
+                                每月 1 日自动重置/充值该用户 Anlas
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Checkbox
+                                checked={!!field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {form.watch('auto_anlas_enabled') && (
+                        <FormField
+                          control={form.control}
+                          name='auto_anlas_amount'
+                          render={({ field }) => (
+                            <FormItem className='pt-2 border-t'>
+                              <FormLabel className='text-xs'>
+                                每月分配目标 Anlas
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type='number'
+                                  min={0}
+                                  {...field}
+                                  value={field.value ?? 10000}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseInt(e.target.value, 10) || 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  </div>
                 </SideDrawerSection>
               )}
 
@@ -585,6 +799,9 @@ export function UsersMutateDrawer({
           onOpenChange={setQuotaDialogOpen}
           userId={currentRow.id}
           currentQuota={parseQuotaFromDollars(currentQuotaRaw || 0)}
+          currentPower={form.watch('power') ?? currentRow.power ?? 0}
+          currentAnlas={form.watch('anlas') ?? currentRow.anlas ?? 0}
+          initialTargetType={quotaDialogTargetType}
           onSuccess={refreshUserData}
         />
       )}

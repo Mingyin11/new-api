@@ -851,6 +851,14 @@ export function ChannelMutateDrawer({
           )?.label
           form.setValue('name', label ? t(label) : `#${target.type}`)
         }
+        if (target.type === 64) {
+          if (!form.getValues('base_url')) {
+            form.setValue('base_url', 'https://image.novelai.net', { shouldDirty: true })
+          }
+          if (!form.getValues('models')) {
+            form.setValue('models', 'nai-diffusion-4-5-full,nai-diffusion-4-full,nai-diffusion-3,nai-diffusion-5', { shouldDirty: true })
+          }
+        }
       }
       setProviderTarget(target)
       setChoosingProvider(false)

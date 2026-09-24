@@ -49,6 +49,16 @@ export interface ChannelTypeConfig {
  * Configuration for each channel type
  */
 export const CHANNEL_TYPE_CONFIGS: Record<number, ChannelTypeConfig> = {
+  64: {
+    id: 64,
+    name: 'NovelAI',
+    icon: 'Sparkles',
+    hints: {
+      baseUrl: 'https://image.novelai.net',
+      key: 'NovelAI Bearer Token (Authorization)',
+      models: 'nai-diffusion-4-5-full,nai-diffusion-4-full,nai-diffusion-3,nai-diffusion-5',
+    },
+  },
   [CHANNEL_TYPE_SGLANG]: {
     id: CHANNEL_TYPE_SGLANG,
     name: CHANNEL_TYPES[CHANNEL_TYPE_SGLANG],

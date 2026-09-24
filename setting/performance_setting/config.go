@@ -36,7 +36,7 @@ var performanceSetting = PerformanceSetting{
 	MonitorEnabled:         true,
 	MonitorCPUThreshold:    90,
 	MonitorMemoryThreshold: 90,
-	MonitorDiskThreshold:   95,
+	MonitorDiskThreshold:   0, // 0 禁用磁盘熔断，防止本地 Windows C 盘已用超标导致拦截生图
 }
 
 func init() {

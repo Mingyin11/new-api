@@ -363,7 +363,27 @@ function BillingBreakdown(props: {
       )}
       <DetailRow
         label={t('Total Cost')}
-        value={formatLogQuota(log.quota)}
+        value={(function () {
+          const otherRecord = other as Record<string, any> | null
+          if (otherRecord?.power_cost !== undefined || otherRecord?.anlas_cost !== undefined) {
+            const p = Number(otherRecord?.power_cost ?? 0)
+            const a = Number(otherRecord?.anlas_cost ?? 0)
+            if (p > 0 && a > 0) return `⚡${p} 电量 + 💎${a} Anlas`
+            if (p > 0) return `⚡${p} 电量 + 💎0 Anlas`
+            if (a > 0) return `⚡0 电量 + 💎${a} Anlas`
+            return '⚡0 电量 + 💎0 Anlas (免费)'
+          }
+          if (log.content?.includes('【NovelAI】')) {
+            if (log.content.includes('免费规格')) return '⚡0 电量 + 💎0 Anlas (免费)'
+            const matchBoth = log.content.match(/扣除\s*(\d+)\s*每日电量.*?\+\s*(\d+)\s*Opus\s*点数\s*\(Anlas\)/)
+            const matchPower = log.content.match(/扣除\s*(\d+)\s*每日电量/)
+            const matchAnlas = log.content.match(/扣除\s*(\d+)\s*Opus\s*点数\s*\(Anlas\)/)
+            if (matchBoth) return `⚡${matchBoth[1]} 电量 + 💎${matchBoth[2]} Anlas`
+            if (matchPower) return `⚡${matchPower[1]} 电量 + 💎0 Anlas`
+            if (matchAnlas) return `⚡0 电量 + 💎${matchAnlas[1]} Anlas`
+          }
+          return formatLogQuota(log.quota)
+        })()}
         mono
       />
     </DetailSection>

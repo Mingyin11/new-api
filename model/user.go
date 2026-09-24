@@ -112,6 +112,14 @@ type User struct {
 	LastLoginAt          int64                      `json:"last_login_at" gorm:"default:0;column:last_login_at"`
 	AuthVersion          int64                      `json:"-" gorm:"type:bigint;not null;default:1;column:auth_version"`
 	AdminPermissions     map[string]map[string]bool `json:"admin_permissions,omitempty" gorm:"-:all"`
+	Anlas                int64                      `json:"anlas" gorm:"type:bigint;default:0;column:anlas"`
+	Power                int64                      `json:"power" gorm:"type:bigint;default:0;column:power"`
+	AutoPowerEnabled     bool                       `json:"auto_power_enabled" gorm:"default:false;column:auto_power_enabled"`
+	AutoPowerAmount      int                        `json:"auto_power_amount" gorm:"default:0;column:auto_power_amount"`
+	AutoAnlasEnabled     bool                       `json:"auto_anlas_enabled" gorm:"default:false;column:auto_anlas_enabled"`
+	AutoAnlasAmount      int                        `json:"auto_anlas_amount" gorm:"default:0;column:auto_anlas_amount"`
+	LastPowerRefreshDate string                     `json:"last_power_refresh_date" gorm:"type:varchar(32);column:last_power_refresh_date"`
+	LastAnlasRefreshMonth string                    `json:"last_anlas_refresh_month" gorm:"type:varchar(32);column:last_anlas_refresh_month"`
 }
 
 func (user *User) ToBaseUser() *UserBase {
@@ -548,6 +556,8 @@ func GetSelfUserById(id int) (*User, error) {
 		"group", "quota", "used_quota", "request_count", "aff_code", "aff_count",
 		"aff_quota", "aff_history", "inviter_id", "linux_do_id", "setting",
 		"stripe_customer", "auth_version",
+		"anlas", "power", "auto_power_enabled", "auto_power_amount",
+		"auto_anlas_enabled", "auto_anlas_amount", "last_power_refresh_date", "last_anlas_refresh_month",
 		"CASE WHEN password <> '' THEN 1 ELSE 0 END AS has_password",
 	}).First(&profile, "id = ?", id).Error
 	profile.User.HasPassword = profile.HasPassword
@@ -888,10 +898,18 @@ func (user *User) EditWithTx(tx *gorm.DB, updatePassword bool) error {
 
 	newUser := *user
 	updates := map[string]any{
-		"username":     newUser.Username,
-		"display_name": newUser.DisplayName,
-		"group":        newUser.Group,
-		"remark":       newUser.Remark,
+		"username":                 newUser.Username,
+		"display_name":             newUser.DisplayName,
+		"group":                    newUser.Group,
+		"remark":                   newUser.Remark,
+		"anlas":                    newUser.Anlas,
+		"power":                    newUser.Power,
+		"auto_power_enabled":       newUser.AutoPowerEnabled,
+		"auto_power_amount":        newUser.AutoPowerAmount,
+		"auto_anlas_enabled":       newUser.AutoAnlasEnabled,
+		"auto_anlas_amount":        newUser.AutoAnlasAmount,
+		"last_power_refresh_date":  newUser.LastPowerRefreshDate,
+		"last_anlas_refresh_month": newUser.LastAnlasRefreshMonth,
 	}
 	if updatePassword {
 		updates["password"] = newUser.Password

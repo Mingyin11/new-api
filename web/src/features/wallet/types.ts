@@ -242,6 +242,14 @@ export interface UserWalletData {
   aff_count: number
   /** User group */
   group: string
+  /** NovelAI Anlas balance */
+  anlas?: number
+  /** NovelAI Power balance */
+  power?: number
+  auto_power_enabled?: boolean
+  auto_power_amount?: number
+  auto_anlas_enabled?: boolean
+  auto_anlas_amount?: number
 }
 
 /**

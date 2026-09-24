@@ -27,8 +27,8 @@ var generalSetting = GeneralSetting{
 	DocsLink:                   "https://docs.newapi.pro",
 	PingIntervalEnabled:        false,
 	PingIntervalSeconds:        60,
-	QuotaDisplayType:           QuotaDisplayTypeUSD,
-	CustomCurrencySymbol:       "¤",
+	QuotaDisplayType:           QuotaDisplayTypeCustom,
+	CustomCurrencySymbol:       " Anlas",
 	CustomCurrencyExchangeRate: 1.0,
 }
 
@@ -60,16 +60,16 @@ func GetQuotaDisplayType() string {
 func GetCurrencySymbol() string {
 	switch generalSetting.QuotaDisplayType {
 	case QuotaDisplayTypeUSD:
-		return "$"
+		return " Anlas"
 	case QuotaDisplayTypeCNY:
 		return "¥"
 	case QuotaDisplayTypeCustom:
 		if generalSetting.CustomCurrencySymbol != "" {
 			return generalSetting.CustomCurrencySymbol
 		}
-		return "¤"
+		return " Anlas"
 	default:
-		return ""
+		return " Anlas"
 	}
 }
 

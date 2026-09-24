@@ -34,6 +34,8 @@ import {
   type ReactNode,
 } from 'react'
 
+import { Sparkles } from 'lucide-react'
+
 import sglangLogo from '@/assets/brand-icons/sglang.svg'
 import { IconSub2api } from '@/assets/custom/icon-sub2api'
 import { IconWan } from '@/assets/custom/icon-wan'
@@ -51,6 +53,13 @@ const CUSTOM_ICONS: Record<string, ComponentType<{ size?: number }>> = {
   ),
   Sub2API: IconSub2api,
   Wan: IconWan,
+  NovelAI: (props) => (
+    <Sparkles
+      size={props.size ?? 20}
+      className='text-violet-500 shrink-0'
+      aria-hidden='true'
+    />
+  ),
 }
 
 const ICON_METADATA = new Map(toc.map((icon) => [icon.id, icon]))

@@ -44,6 +44,60 @@ func manageUserQuota(c *gin.Context, req ManageRequest) {
 		markAuditLogged(c)
 	}()
 
+	if req.TargetType == "power" {
+		targetUser, err := model.GetUserById(req.Id, false)
+		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		var newPower int64
+		switch req.Mode {
+		case "add":
+			newPower = targetUser.Power + int64(req.Value)
+		case "subtract":
+			newPower = targetUser.Power - int64(req.Value)
+		case "override":
+			newPower = int64(req.Value)
+		default:
+			common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+			return
+		}
+		if err := model.SetUserNovelAIBalance(req.Id, &newPower, nil); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		success = true
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Power adjusted successfully"})
+		return
+	}
+
+	if req.TargetType == "anlas" {
+		targetUser, err := model.GetUserById(req.Id, false)
+		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		var newAnlas int64
+		switch req.Mode {
+		case "add":
+			newAnlas = targetUser.Anlas + int64(req.Value)
+		case "subtract":
+			newAnlas = targetUser.Anlas - int64(req.Value)
+		case "override":
+			newAnlas = int64(req.Value)
+		default:
+			common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+			return
+		}
+		if err := model.SetUserNovelAIBalance(req.Id, nil, &newAnlas); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		success = true
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Anlas adjusted successfully"})
+		return
+	}
+
 	adjustment, err := model.AdjustUserQuota(req.Id, c.GetInt("role"), req.Mode, req.Value)
 	if err != nil {
 		switch {

@@ -207,9 +207,8 @@ function getDisplayMeta(config: CurrencyConfig): DisplayMeta {
     case 'USD':
     default:
       return {
-        kind: 'currency',
-        symbol: '$',
-        currencyCode: 'USD',
+        kind: 'custom',
+        symbol: ' Anlas',
         exchangeRate: 1,
       }
   }
@@ -219,10 +218,9 @@ function getBillingDisplayMeta(config: CurrencyConfig): DisplayMeta {
   const meta = getDisplayMeta(config)
   if (meta.kind === 'tokens') {
     return {
-      kind: 'currency',
-      symbol: '$',
-      currencyCode: 'USD',
-      exchangeRate: 1,
+      kind: 'custom',
+      symbol: config.customCurrencySymbol?.trim() || 'Anlas',
+      exchangeRate: config.customCurrencyExchangeRate || 1,
     }
   }
   return meta
@@ -350,7 +348,14 @@ function formatCurrencyValue(
     maximumFractionDigits: options.compact ? 1 : digits,
   }).format(adjustedValue)
 
-  return options.showSymbol ? `${meta.symbol} ${decimal}` : decimal
+  if (options.showSymbol) {
+    const sym = (meta.symbol || '').trim()
+    if (['$', '¥', '€', '£', '₽', '₹', '₩'].includes(sym)) {
+      return `${sym}${decimal}`
+    }
+    return `${decimal} ${sym}`.trim()
+  }
+  return decimal
 }
 
 /**
@@ -557,7 +562,7 @@ export function getCurrencyLabel(): string {
       return meta.kind === 'custom' ? meta.symbol : 'Custom'
     case 'USD':
     default:
-      return 'USD'
+      return 'Anlas'
   }
 }
 

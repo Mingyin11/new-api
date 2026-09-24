@@ -49,10 +49,10 @@ export interface SystemConfig {
 
 export const DEFAULT_CURRENCY_CONFIG: CurrencyConfig = {
   displayInCurrency: true,
-  quotaDisplayType: 'USD',
-  quotaPerUnit: 500000,
+  quotaDisplayType: 'CUSTOM',
+  quotaPerUnit: 1,
   usdExchangeRate: 1,
-  customCurrencySymbol: '¤',
+  customCurrencySymbol: ' Anlas',
   customCurrencyExchangeRate: 1,
 }
 

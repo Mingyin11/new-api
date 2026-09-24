@@ -53,6 +53,14 @@ export interface UserProfile {
   quota: number
   /** Total used quota */
   used_quota: number
+  /** NovelAI Anlas balance */
+  anlas?: number
+  /** NovelAI Power balance */
+  power?: number
+  auto_power_enabled?: boolean
+  auto_power_amount?: number
+  auto_anlas_enabled?: boolean
+  auto_anlas_amount?: number
   /** Total request count */
   request_count: number
   /** Account status (1=启用, 2=禁用, 3=待审核, 4=已删除) */

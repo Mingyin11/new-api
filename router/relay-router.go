@@ -183,6 +183,23 @@ func SetRelayRouter(router *gin.Engine) {
 	registerMjRouterGroup(relayMjModeRouter)
 	//relayMjRouter.Use()
 
+	// NovelAI native image generation routes (compatible with st-chatu8 & direct NAI API)
+	relayNovelaiRouter := router.Group("/ai")
+	relayNovelaiRouter.Use(middleware.RouteTag("relay"))
+	relayNovelaiRouter.Use(middleware.SystemPerformanceCheck())
+	relayNovelaiRouter.Use(middleware.TokenAuth())
+	{
+		relayNovelaiRouter.POST("/generate-image", controller.RelayNovelAINative)
+	}
+
+	relayNovelaiV1Router := router.Group("/v1/ai")
+	relayNovelaiV1Router.Use(middleware.RouteTag("relay"))
+	relayNovelaiV1Router.Use(middleware.SystemPerformanceCheck())
+	relayNovelaiV1Router.Use(middleware.TokenAuth())
+	{
+		relayNovelaiV1Router.POST("/generate-image", controller.RelayNovelAINative)
+	}
+
 	relayGeminiRouter := router.Group("/v1beta")
 	// :countTokens is not implemented. Answer it like an unregistered route
 	// before auth/channel selection instead of silently relaying it as
