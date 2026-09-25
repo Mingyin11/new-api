@@ -241,11 +241,11 @@ func (a *Adaptor) DoRequest(c *gin.Context, info *relaycommon.RelayInfo, request
 	// 执行设备指纹清洗并伪装服务端指纹
 	SanitizeAndSpoofHeaders(req, info.ApiKey)
 
-	// 官方真实消耗感知：生图前通过 GET /user/subscription 查询账号实时 Anlas 余额
-	anlasBefore, errBefore := service.FetchOfficialAnlasBalance(c.Request.Context(), info.ChannelBaseUrl, info.ApiKey)
+	// 官方真实消耗感知：生图前通过 GET /user/subscription 查询账号实时 Anlas 和 电量(usage)
+	balBefore, errBefore := service.FetchOfficialSubscriptionStatus(c.Request.Context(), info.ChannelBaseUrl, info.ApiKey)
 	if errBefore == nil {
-		c.Set("novelai_anlas_before", anlasBefore)
-		c.Set("novelai_anlas_before_ok", true)
+		c.Set("novelai_bal_before", balBefore)
+		c.Set("novelai_bal_before_ok", true)
 	}
 
 	client := &http.Client{
@@ -355,23 +355,34 @@ func (a *Adaptor) DoResponse(c *gin.Context, resp *http.Response, info *relaycom
 	// 后置扣费结算 (基于官方 GET /user/subscription 真实扣减)
 	if billingAny, exists := c.Get("novelai_billing_result"); exists {
 		if billingResult, ok := billingAny.(service.NovelAIBillingResult); ok {
-			if beforeOk, okOk := c.Get("novelai_anlas_before_ok"); okOk && beforeOk.(bool) {
-				anlasBefore := c.GetInt("novelai_anlas_before")
-				anlasAfter, errAfter := service.FetchOfficialAnlasBalance(c.Request.Context(), info.ChannelBaseUrl, info.ApiKey)
-				if errAfter == nil {
-					consumed := anlasBefore - anlasAfter
-					if consumed < 0 {
-						consumed = 0
-					}
-					billingResult.AnlasCost = consumed
-					if consumed > 0 {
-						if billingResult.PowerCost > 0 {
-							billingResult.Type = service.BillingTypeComposite
-						} else {
-							billingResult.Type = service.BillingTypeAnlas
+			if beforeOk, okOk := c.Get("novelai_bal_before_ok"); okOk && beforeOk.(bool) {
+				balBeforeVal, hasBal := c.Get("novelai_bal_before")
+				if hasBal {
+					if balBefore, okCast := balBeforeVal.(service.NovelAIBalanceStatus); okCast {
+						balAfter, errAfter := service.FetchOfficialSubscriptionStatus(c.Request.Context(), info.ChannelBaseUrl, info.ApiKey)
+						if errAfter == nil {
+							anlasConsumed := balBefore.Anlas - balAfter.Anlas
+							if anlasConsumed < 0 {
+								anlasConsumed = 0
+							}
+							billingResult.AnlasCost = anlasConsumed
+
+							powerConsumed := balBefore.Power - balAfter.Power
+							if powerConsumed < 0 {
+								powerConsumed = 0
+							}
+							billingResult.PowerCost = powerConsumed
+
+							if billingResult.PowerCost > 0 && billingResult.AnlasCost > 0 {
+								billingResult.Type = service.BillingTypeComposite
+							} else if billingResult.PowerCost > 0 {
+								billingResult.Type = service.BillingTypePower
+							} else if billingResult.AnlasCost > 0 {
+								billingResult.Type = service.BillingTypeAnlas
+							} else {
+								billingResult.Type = service.BillingTypeFree
+							}
 						}
-					} else if billingResult.PowerCost == 0 {
-						billingResult.Type = service.BillingTypeFree
 					}
 				}
 			}

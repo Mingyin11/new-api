@@ -224,18 +224,29 @@ func SettleNovelAIBilling(userId int, result NovelAIBillingResult) error {
 	return nil
 }
 
+type NovelAIUsageStatus struct {
+	IsNegative           bool `json:"isNegative"`
+	Percent              int  `json:"percent"`
+	TimeUntilNextPercent int  `json:"timeUntilNextPercent"`
+}
+
 type NovelAISubscriptionResponse struct {
-	Tier              int  `json:"tier"`
-	Active            bool `json:"active"`
+	Tier              int                `json:"tier"`
+	Active            bool               `json:"active"`
 	TrainingStepsLeft struct {
 		FixedTrainingStepsLeft int `json:"fixedTrainingStepsLeft"`
 		PurchasedTrainingSteps int `json:"purchasedTrainingSteps"`
 	} `json:"trainingStepsLeft"`
+	Usage             NovelAIUsageStatus `json:"usage"`
 }
 
-// FetchOfficialAnlasBalance 调用官方 GET /user/subscription 接口获取官方账号实际剩余的 Anlas 总点数
-// (fixedTrainingStepsLeft + purchasedTrainingSteps)
-func FetchOfficialAnlasBalance(ctx context.Context, baseURL string, apiKey string) (int, error) {
+type NovelAIBalanceStatus struct {
+	Anlas int `json:"anlas"`
+	Power int `json:"power"`
+}
+
+// FetchOfficialSubscriptionStatus 调用官方 GET /user/subscription 接口获取官方账号实际剩余的 Anlas 和 电量(usage.percent)
+func FetchOfficialSubscriptionStatus(ctx context.Context, baseURL string, apiKey string) (NovelAIBalanceStatus, error) {
 	base := strings.TrimRight(baseURL, "/")
 	if base == "" {
 		base = "https://image.novelai.net"
@@ -243,7 +254,7 @@ func FetchOfficialAnlasBalance(ctx context.Context, baseURL string, apiKey strin
 	url := fmt.Sprintf("%s/user/subscription", base)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return 0, err
+		return NovelAIBalanceStatus{}, err
 	}
 	cleanToken := strings.TrimSpace(apiKey)
 	if !strings.HasPrefix(cleanToken, "Bearer ") {
@@ -258,20 +269,33 @@ func FetchOfficialAnlasBalance(ctx context.Context, baseURL string, apiKey strin
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return 0, err
+		return NovelAIBalanceStatus{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return 0, fmt.Errorf("GET %s status %d: %s", url, resp.StatusCode, string(body))
+		return NovelAIBalanceStatus{}, fmt.Errorf("GET %s status %d: %s", url, resp.StatusCode, string(body))
 	}
 
 	var sub NovelAISubscriptionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&sub); err != nil {
-		return 0, err
+		return NovelAIBalanceStatus{}, err
 	}
 	totalAnlas := sub.TrainingStepsLeft.FixedTrainingStepsLeft + sub.TrainingStepsLeft.PurchasedTrainingSteps
-	return totalAnlas, nil
+	return NovelAIBalanceStatus{
+		Anlas: totalAnlas,
+		Power: sub.Usage.Percent,
+	}, nil
 }
+
+// FetchOfficialAnlasBalance 兼容历史调用的 Anlas 查询包装函数
+func FetchOfficialAnlasBalance(ctx context.Context, baseURL string, apiKey string) (int, error) {
+	status, err := FetchOfficialSubscriptionStatus(ctx, baseURL, apiKey)
+	if err != nil {
+		return 0, err
+	}
+	return status.Anlas, nil
+}
+
 

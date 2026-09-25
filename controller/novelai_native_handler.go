@@ -130,12 +130,12 @@ func RelayNovelAINative(c *gin.Context) {
 	targetURL := fmt.Sprintf("%s/ai/generate-image", baseUrl)
 	logger.LogInfo(c, fmt.Sprintf("[NovelAI Handler] Selected channel ID=%d, Name=%s, TargetURL=%s", channel.Id, channel.Name, targetURL))
 
-	// 5.1 官方真实消耗感知：生图前通过 GET /user/subscription 查询账号实时 Anlas 余额
-	anlasBefore, errBefore := service.FetchOfficialAnlasBalance(c.Request.Context(), baseUrl, channel.Key)
+	// 5.1 官方真实消耗感知：生图前通过 GET /user/subscription 查询账号实时 Anlas 和 电量(usage)
+	balBefore, errBefore := service.FetchOfficialSubscriptionStatus(c.Request.Context(), baseUrl, channel.Key)
 	if errBefore == nil {
-		logger.LogInfo(c, fmt.Sprintf("[NovelAI Native] 官方账号生图前剩余 Anlas: %d", anlasBefore))
+		logger.LogInfo(c, fmt.Sprintf("[NovelAI Native] 官方账号生图前剩余: Anlas=%d, 电量(Power/Usage)=%d", balBefore.Anlas, balBefore.Power))
 	} else {
-		logger.LogWarn(c, fmt.Sprintf("[NovelAI Native] 查询官方生图前 Anlas 失败: %v", errBefore))
+		logger.LogWarn(c, fmt.Sprintf("[NovelAI Native] 查询官方生图前余额失败: %v", errBefore))
 	}
 
 	upstreamReq, err := http.NewRequestWithContext(c.Request.Context(), http.MethodPost, targetURL, bytes.NewReader(bodyBytes))
@@ -170,28 +170,41 @@ func RelayNovelAINative(c *gin.Context) {
 		return
 	}
 
-	// 6. 真实查询官方生图后余额并计算差值 (通过 GET /user/subscription)
+	// 6. 真实查询官方生图后余额并计算差值 (通过 GET /user/subscription 获取实际 Anlas 和电量消耗)
 	if errBefore == nil {
-		anlasAfter, errAfter := service.FetchOfficialAnlasBalance(c.Request.Context(), baseUrl, channel.Key)
+		balAfter, errAfter := service.FetchOfficialSubscriptionStatus(c.Request.Context(), baseUrl, channel.Key)
 		if errAfter == nil {
-			logger.LogInfo(c, fmt.Sprintf("[NovelAI Native] 官方账号生图后剩余 Anlas: %d", anlasAfter))
-			consumed := anlasBefore - anlasAfter
-			if consumed < 0 {
-				consumed = 0
+			logger.LogInfo(c, fmt.Sprintf("[NovelAI Native] 官方账号生图后剩余: Anlas=%d, 电量=%d", balAfter.Anlas, balAfter.Power))
+			
+			// 动态计算 Anlas 消耗
+			anlasConsumed := balBefore.Anlas - balAfter.Anlas
+			if anlasConsumed < 0 {
+				anlasConsumed = 0
 			}
-			logger.LogInfo(c, fmt.Sprintf("[NovelAI Native] 官方实际扣除 Anlas 点数: %d (前:%d -> 后:%d)", consumed, anlasBefore, anlasAfter))
-			billingResult.AnlasCost = consumed
-			if consumed > 0 {
-				if billingResult.PowerCost > 0 {
-					billingResult.Type = service.BillingTypeComposite
-				} else {
-					billingResult.Type = service.BillingTypeAnlas
-				}
-			} else if billingResult.PowerCost == 0 {
+			billingResult.AnlasCost = anlasConsumed
+
+			// 动态计算 电量(Power) 消耗 (基于 usage.percent 差值)
+			powerConsumed := balBefore.Power - balAfter.Power
+			if powerConsumed < 0 {
+				powerConsumed = 0
+			}
+			billingResult.PowerCost = powerConsumed
+
+			logger.LogInfo(c, fmt.Sprintf("[NovelAI Native] 官方实际扣除: Anlas=%d (前:%d -> 后:%d), 电量(Power)=%d (前:%d -> 后:%d)",
+				anlasConsumed, balBefore.Anlas, balAfter.Anlas,
+				powerConsumed, balBefore.Power, balAfter.Power))
+
+			if billingResult.PowerCost > 0 && billingResult.AnlasCost > 0 {
+				billingResult.Type = service.BillingTypeComposite
+			} else if billingResult.PowerCost > 0 {
+				billingResult.Type = service.BillingTypePower
+			} else if billingResult.AnlasCost > 0 {
+				billingResult.Type = service.BillingTypeAnlas
+			} else {
 				billingResult.Type = service.BillingTypeFree
 			}
 		} else {
-			logger.LogWarn(c, fmt.Sprintf("[NovelAI Native] 查询官方生图后 Anlas 失败: %v, 回退默认规则", errAfter))
+			logger.LogWarn(c, fmt.Sprintf("[NovelAI Native] 查询官方生图后余额/用量失败: %v, 回退默认规则", errAfter))
 		}
 	}
 
